@@ -1,0 +1,128 @@
+import os
+import sys
+import logging
+from logging.handlers import SysLogHandler
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Set up syslog handler
+syslog_handler = SysLogHandler(address='/dev/log')
+logger.addHandler(syslog_handler)
+
+# Collect logs from Linux system
+def collect_logs():
+    logs = []
+    with open('/var/log/syslog', 'r') as f:
+        for line in f:
+            logs.append(line.strip())
+    return logs
+
+# Send logs to Elasticsearch
+def send_logs_to_es(logs):
+    es_index = 'my_siem_index'
+    es_type = 'log'
+    es_host = 'localhost:9200'
+
+    from elasticsearch import Elasticsearch
+    es = Elasticsearch(hosts=[es_host])
+
+    for log in logs:
+        es.index(index=es_index, doc_type=es_type, body={'log': log})
+
+if __name__ == '__main__':
+    logs = collect_logs()
+    send_logs_to_es(logs)
+    
+    from elasticsearch import Elasticsearch
+
+es_index = 'my_siem_index'
+es_type = 'log'
+es_host = 'localhost:9200'
+
+es = Elasticsearch(hosts=[es_host])
+
+# Create index if it doesn't exist
+if not es.indices.exists(index=es_index):
+    es.indices.create(index=es_index)
+
+# Index logs
+def index_logs(logs):
+    for log in logs:
+        es.index(index=es_index, doc_type=es_type, body={'log': log})
+
+if __name__ == '__main__':
+    logs = ['log1', 'log2', 'log3']  # Replace with actual logs
+    index_logs(logs)
+kibana_dashboard.json
+
+json
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+{
+  "title": "SIEM Dashboard",
+  "description": "Basic SIEM dashboard",
+  "hits": 0,
+  "columns": [
+    {
+      "field": "@timestamp",
+      "displayName": "Timestamp"
+    },
+    {
+      "field": "log",
+      "displayName": "Log Message"
+    }
+  ],
+  "panelsJSON": [
+    {
+      "type": "table",
+      "title": "Log Messages",
+      "fields": ["@timestamp", "log"],
+      "sort": ["@timestamp", "desc"]
+    }
+  ],
+  "optionsJSON": {
+    "filter": []
+  }
+}
+threat_detection_rule.py
+
+python
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+from elasticsearch import Elasticsearch
+
+es_index = 'my_siem_index'
+es_type = 'log'
+es_host = 'localhost:9200'
+
+es = Elasticsearch(hosts=[es_host])
+
+# Define threat detection rule
+def detect_unauthorized_access(logs):
+    for log in logs:
+        if 'unauthorized access' in log['log'].lower():
+            print('Unauthorized access detected!')
+            # Send alert to security team
+
+if __name__ == '__main__':
+    logs = es.search(index=es_index, doc_type=es_type, body={'query': {'match_all': {}}})['hits']['hits']
+    detect_unauthorized_access(logs)
+How to use:
+
+Run log_collector.py to collect logs from the Linux system and send them to Elasticsearch.
+Run elasticsearch_indexer.py to index the logs in Elasticsearch.
+Create a new dashboard in Kibana using the kibana_dashboard.json file.
+Run threat_detection_rule.py to detect unauthorized access attempts and send alerts to the security team.
+This is a basic example of a SIEM tool, and you should consider expanding it to include more features, such as:
+
+Advanced threat
